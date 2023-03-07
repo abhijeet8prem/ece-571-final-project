@@ -1,6 +1,6 @@
 def crc_remainder(input_string, poly):
     # Append zeros to the input string to make room for the CRC remainder
-    input_string += "0" * (len(poly) - 1)
+    input_string += "0" * (len(poly) )
     
     # Convert the input string and polynomial to binary integers
     input_int = int(input_string, 2)
@@ -21,7 +21,7 @@ def crc_remainder(input_string, poly):
 
 
 # Test the function
-input_string = "1101011011"
+input_string = "1101011011101001"
 poly = "1000100000010001"
 crc = crc_remainder(input_string, poly)
 print(crc)
