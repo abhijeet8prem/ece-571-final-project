@@ -1,9 +1,10 @@
 #refernece https://www.geeksforgeeks.org/cyclic-redundancy-check-python/ 
-# defining xor gate 
+
 
 def bin_format(integer, length):
     return f'{integer:0>{length}b}'
 
+# defining xor gate 
 def xor(a, b):
  
     # initialize result
@@ -77,7 +78,7 @@ def encodeData(data, key):
 
 #input_string = "0110100001101001"
 input_string = "0010010011100100"
-poly = "10001000000100001"
+poly = "10001000000100001"              # one of the crc-16 polynomial
 #poly = "1011"
 crc = mod2div(input_string,poly)
 codeword = encodeData(input_string, poly)
