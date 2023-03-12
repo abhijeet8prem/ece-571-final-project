@@ -1,13 +1,13 @@
-module crcgen(input clk,rst,[15:0]data,output reg [15:0]crcout);
-  reg [15:0] genpol;
+module crcgen(input clk, rst, [15:0] dataIn , output reg crcValid, [15:0] CrcOut, [15:0] dataOut); 
+  reg [15:0] Q; 
   bit databit;
-  reg [31:0] datawithcrc;
-  enum logic [1:0]{Init, Load, Reset}State, NextState;
-  reg busy, ld_en, cnt_en, done, reset;
+  reg [31:0] datawithzeroes; //data appended with zeroes
+  enum logic [1:0]{Init, Load, Reset}State, NextState; //FSM with three states
+  reg busy, ld_en, cnt_en, done, clear; //busy, load_enable, count_enable, done, clear
   
-  assign datawithcrc = {data,16'b0};
+  assign datawithzeroes = {dataIn,16'b0};
   
-  DownCounter D(clk, ld_en, datawithcrc, cnt_en, databit, done);
+  DownCounter D(clk, ld_en, datawithzeroes, cnt_en, databit, done);
   
   always_ff @(posedge clk)
     begin
@@ -19,7 +19,7 @@ module crcgen(input clk,rst,[15:0]data,output reg [15:0]crcout);
 
   always_comb
     begin
-      {busy, ld_en, cnt_en, reset} = '0;
+      {busy, ld_en, cnt_en, crcValid, clear} = '0;
       case(State)
         Init: begin
           busy = '0;
@@ -30,8 +30,9 @@ module crcgen(input clk,rst,[15:0]data,output reg [15:0]crcout);
           cnt_en = '1;
         end
         Reset:begin
-          reset = '1;
+          clear = '1;
           busy = '1;
+	  crcValid = '1;
         end
       endcase
     end
@@ -55,29 +56,33 @@ module crcgen(input clk,rst,[15:0]data,output reg [15:0]crcout);
   
   always_ff@(posedge clk)
     begin
-      if(NextState == Reset)
-         crcout <= genpol;
-      else
-        crcout <= 32'bx;
+      if(done == 1) begin
+         CrcOut <= Q;
+         dataOut <= dataIn;
+      end
+      else begin
+        CrcOut <= '0;
+        dataOut <= '0;
+      end
     end
 
 
-  DFF D0((databit^genpol[15]),clk,rst,genpol[0]);
-  DFF D1(genpol[0],clk,rst,genpol[1]);
-  DFF D2(genpol[1],clk,rst,genpol[2]);
-  DFF D3(genpol[2],clk,rst,genpol[3]);
-  DFF D4(genpol[3],clk,rst,genpol[4]);
-  DFF D5((genpol[4]^genpol[15]),clk,rst,genpol[5]);
-  DFF D6(genpol[5],clk,rst,genpol[6]);
-  DFF D7(genpol[6],clk,rst,genpol[7]);
-  DFF D8(genpol[7],clk,rst,genpol[8]);
-  DFF D9(genpol[8],clk,rst,genpol[9]);
-  DFF D10(genpol[9],clk,rst,genpol[10]);
-  DFF D11(genpol[10],clk,rst,genpol[11]);
-  DFF D12((genpol[11]^genpol[15]),clk,rst,genpol[12]);
-  DFF D13(genpol[12],clk,rst,genpol[13]);
-  DFF D14(genpol[13],clk,rst,genpol[14]);
-  DFF D15(genpol[14],clk,rst,genpol[15]);
+  DFF D0((databit^Q[15]),clk,rst,Q[0]);
+  DFF D1(Q[0],clk,rst,Q[1]);
+  DFF D2(Q[1],clk,rst,Q[2]);
+  DFF D3(Q[2],clk,rst,Q[3]);
+  DFF D4(Q[3],clk,rst,Q[4]);
+  DFF D5((Q[4]^Q[15]),clk,rst,Q[5]);
+  DFF D6(Q[5],clk,rst,Q[6]);
+  DFF D7(Q[6],clk,rst,Q[7]);
+  DFF D8(Q[7],clk,rst,Q[8]);
+  DFF D9(Q[8],clk,rst,Q[9]);
+  DFF D10(Q[9],clk,rst,Q[10]);
+  DFF D11(Q[10],clk,rst,Q[11]);
+  DFF D12((Q[11]^Q[15]),clk,rst,Q[12]);
+  DFF D13(Q[12],clk,rst,Q[13]);
+  DFF D14(Q[13],clk,rst,Q[14]);
+  DFF D15(Q[14],clk,rst,Q[15]);
 
 endmodule
 
@@ -96,32 +101,30 @@ module DFF(D,clk,rst,Q);
     end
 endmodule
 
-module DownCounter(clock, load, data, enable, databit, done);
-  input clock;
+module DownCounter(clk, load, data, enable, databit, done);
+  input clk;
   input load;
   input [31:0] data;
   input enable;
   output bit databit;
   output bit done;
   reg [31:0] m;
-  int i;
+  int count;
 
-  always_ff @(posedge clock)
+  assign done = (count == '0);
+
+  always_ff @(posedge clk)
     begin
       if (load)begin
          m <= data;
-         i = 32;
-         done = '0;
+         count = 33;
       end
       else if (enable)
         begin
-          databit <= m[i-1];
-          i <= i-1;
-          if(i == 0) begin
-            done = '1;
-            i = 32;
-          end
+          databit <= m[count-2];
+          count <= count - 1;
         end
     end
   
 endmodule
+
