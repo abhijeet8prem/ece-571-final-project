@@ -18,6 +18,7 @@ poly            = "10001000000100001"              # Polynomial used X^16 + X^12
 crc_error_b_file = open("crc_rx_pattern_b.txt","w")
 crc_error_h_file = open("crc_rx_pattern_h.txt","w")
 crc_error_d_file = open("crc_rx_pattern_d.txt","w")
+crc_error_case_file= open("crc_rx_pat_case.txt","w")
 
 ############### Define all the necessary functions #############
 
@@ -129,7 +130,7 @@ tx_codeword_str = encodeData(input_string, poly)
 tx_crc = int(tx_codeword_str[16:],2)
 tx_codeword = int(tx_codeword_str,2)
 
-'''
+
 #print("All error pattern ",errors)
 
 print("\n TX_ CRC \t: {:32b}".format(tx_crc))
@@ -155,7 +156,7 @@ print(" error CRC\t: {:016b}".format(rx_crc_er))
 #print(" Error vector \t\t\t\t\t Error CRC")
 #print(" {:032b}\t\t {:016b}".format(error,rx_crc_er))
 
-'''
+
 
 # loop to calculate the rest of the patterns
 
@@ -173,3 +174,5 @@ for i in range(l_error):
     crc_error_b_file.write(" {:032b}\t {:016b}\n".format(error,rx_crc_er))                # writing to file, values in binary
     crc_error_h_file.write(" {:08x}\t {:08x}\n".format(error,rx_crc_er))                  # writing to file, values in hex
     crc_error_d_file.write(" {:d}\t {:d}\n".format(error,rx_crc_er))                      # writing to file, values in decimal
+    #crc_error_case_file.write(" 16'b{:016b}\t:\t CorVec = 32'h{:08x}\n".format(rx_crc_er,error)) 
+    crc_error_case_file.write("{:08x}\t{:016b}\n".format(error, rx_crc_er))                     # writing to file, values in decimal
