@@ -1,5 +1,5 @@
 # ece-571-final-project
-project to model Huffman code and CRC in System Verilog
+project to model CRC and correct error in System Verilog
 
 Note:
 Please do not commit to main directly, clone the repo and then create your own branch to make modifications.
