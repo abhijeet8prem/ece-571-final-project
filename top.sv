@@ -1,11 +1,12 @@
 module top();
-  reg [15:0] dataIn, CrcOut, dataOut;
-  reg clk = 1'b1;
-  reg rst, crcValid;
-  bit [7:0] m1, m2, ascii;
-  string s = "HARSHA";
-  bit [7:0] msg[$];
-  int length;
+  logic [15:0] dataIn, CrcOut, dataOut;
+  bit clk = 1'b1;
+  logic rst, crcValid;
+  logic [7:0] m1, m2, ascii;
+  string s = "HARSHA ";
+  logic [7:0] msg[$];
+  int length, bit_flips;
+  logic [31:0] error_bits; 
   
   crcgen DUT(.*);
   
@@ -31,7 +32,7 @@ module top();
     end
   endtask
   
-  task Evenlen(input int length, input bit [7:0] msg [$]);
+  task Evenlen(input int length, input logic [7:0] msg [$]);
     forever begin
       if(~(top.DUT.busy)) begin
         if(msg.size() == 0)begin
@@ -41,19 +42,21 @@ module top();
           m1 = msg.pop_front();
           m2 = msg.pop_front();
           dataIn = {m1,m2};
+          bit_flips = $urandom_range(0,3);
+          Error_injection(bit_flips);
         end
       end
       
       if(top.DUT.clear == '1)begin
          reset();
-         $display("%b,%b,%b,%b,%b", m1, m2, dataIn, dataOut, CrcOut);
+         $display("%b, %b, %b, %b, %b, %b, %d", m1, m2, dataIn, dataOut, CrcOut, error_bits, bit_flips);
       end
       @(negedge clk);
     end
     $finish();
   endtask
       
-  task Oddlen(input int length, input bit [7:0] msg [$]);
+  task Oddlen(input int length, input logic [7:0] msg [$]);
     forever begin
       if(~(top.DUT.busy)) begin
         if(msg.size() == 0)
@@ -62,22 +65,35 @@ module top();
           m1 = msg.pop_front();
           m2 = 8'b0;
           dataIn = {m1,m2};
+          bit_flips = $urandom_range(0,3);
+          Error_injection(bit_flips);
         end
         else begin
           m1 = msg.pop_front();
           m2 = msg.pop_front();
           dataIn = {m1,m2};
+          bit_flips = $urandom_range(0,3);
+          Error_injection(bit_flips);
         end
       end
       if(top.DUT.clear == '1)begin
          reset();
-         $display("%b,%b,%b,%b,%b", m1, m2, dataIn, dataOut, CrcOut);
+         $display("%b, %b, %b, %b, %b, %b, %d", m1, m2, dataIn, dataOut, CrcOut, error_bits, bit_flips);
       end
       @(negedge clk);
     end
     $finish();
   endtask
           
+  task Error_injection(input int bit_flips);
+    bit [31:0] error_out;
+    error_out = '0;
+    for(int j = 0; j < bit_flips; j++) begin
+      error_out[$urandom_range(0,31)] = 1'b1;
+    end
+    error_bits = error_out;
+  endtask
+
   initial begin
     rst = 1'b1;
     @(negedge clk);
