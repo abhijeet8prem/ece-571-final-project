@@ -1,7 +1,7 @@
 module top();
   logic [15:0] dataIn, CrcOut, dataOut;
   bit clk = 1'b1;
-  logic rst, crcValid;
+  logic rst, crcValid, eom, eot;
   logic [7:0] m1, m2, ascii;
   string s = "HARSHA ";
   logic [7:0] msg[$];
@@ -17,7 +17,7 @@ module top();
   task reset();
     begin
       rst = '1;
-      @(posedge clk);
+      @(negedge clk);
       rst = '0;
     end
   endtask
@@ -36,6 +36,8 @@ module top();
     forever begin
       if(~(top.DUT.busy)) begin
         if(msg.size() == 0)begin
+	  eom = '1;
+	  repeat(2)@(negedge clk);
           break;
         end
         else begin
@@ -47,9 +49,8 @@ module top();
         end
       end
       
-      if(top.DUT.clear == '1)begin
-         reset();
-         $display("%b, %b, %b, %b, %b, %b, %d", m1, m2, dataIn, dataOut, CrcOut, error_bits, bit_flips);
+      if(top.DUT.clr == '1)begin
+         $display("%b, %b, %b, %b, %b, %b, %d, %b, %b", m1, m2, dataIn, dataOut, CrcOut, error_bits, bit_flips, eom, crcValid);
       end
       @(negedge clk);
     end
@@ -59,8 +60,11 @@ module top();
   task Oddlen(input int length, input logic [7:0] msg [$]);
     forever begin
       if(~(top.DUT.busy)) begin
-        if(msg.size() == 0)
+        if(msg.size() == 0)begin
+	  eom = '1;
+	  @(negedge clk);
           break;
+	end
         else if(msg.size() == 1)begin
           m1 = msg.pop_front();
           m2 = 8'b0;
@@ -76,9 +80,8 @@ module top();
           Error_injection(bit_flips);
         end
       end
-      if(top.DUT.clear == '1)begin
-         reset();
-         $display("%b, %b, %b, %b, %b, %b, %d", m1, m2, dataIn, dataOut, CrcOut, error_bits, bit_flips);
+      if(top.DUT.clr == '1)begin
+         $display("%b, %b, %b, %b, %b, %b, %d, %b, %b", m1, m2, dataIn, dataOut, CrcOut, error_bits, bit_flips, eom, crcValid);
       end
       @(negedge clk);
     end
