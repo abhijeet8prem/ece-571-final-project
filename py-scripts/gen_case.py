@@ -14,9 +14,14 @@ import os
 
 print(os.getcwd())
 
+
 # open necessary files to writ to
-input_file = open("input-message.txt","r")
-crc_error_h_file = open("codewords.txt","w")
+input_file = "input-message.txt"
+
+with open(input_file, 'r') as f:
+    inputContent = f.read().strip()
+
+codewords = open("codewords.txt","w")
 
 ############### Define all the necessary functions #############
 
@@ -97,8 +102,17 @@ def encodeData(data, key):
     codeword = data + remainder
     return codeword
 
+input_string    = ""                                # 16 bit message 
+poly            = "10001000000100001"              # Polynomial used X^16 + X^12 + X^5 + 1
 
-print(len(input_file))
 
-for x in input_file:
-    print(x)
+if len(inputContent) % 2 != 0:
+    inputContent += ' '
+
+for i in range(0, len(inputContent), 2):
+    
+    input_string = ''.join(str(bin_format(ord(c),8)) for c in inputContent[i:i+2])
+    tx_codeword_str = encodeData(input_string, poly)
+
+    print(inputContent[i:i+2] + "\t"+ ''.join(str(bin_format(ord(c),8)) for c in inputContent[i:i+2]) +"\t" + tx_codeword_str)
+    codewords.write(tx_codeword_str+"\n") 
