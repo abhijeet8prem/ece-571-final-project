@@ -103,7 +103,7 @@ interface   topInterface(                   // <-- ports that interfaces with th
 
     modport receiver(
         input clk, rst, erCW, CWValid,
-        output dOutValid, erFree, endMsgOut, dOut
-        );
+        output dOutValid, erFree, endMsgOut, dOut);
+
 
 endinterface
