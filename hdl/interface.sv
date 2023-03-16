@@ -3,7 +3,7 @@
 //                project                    
 //
 // Author           : Abhijeet Prem  (abhij@pdx.edu)
-// Last modified    : 14th Mar 2023
+// Last modified    : 15th Mar 2023
 //
 // Description:
 //  * Aninterface to encapsulate all the singnals from the top module
@@ -15,42 +15,95 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-interface   MainBus(                        // <-- ports that interfaces with the top module
+interface   topInterface(                   // <-- ports that interfaces with the top module
     input   logic clk,                      // master clock signal
     input   logic rst,                      // master rest signal
-    input   logic d_in_valid,               // singal to indicate that the input data is valid
-    input   logic er_load,                  // control signal to load error vector 
-    input   logic [15:0] d_in,              // input data to the tx block from top
-    input   logic [31:0] er_in,             // input error vector for the error injuctor module
-    output  tri   [15:0] d_out,             // output data from the receiver block
-    output  logic d_out_valid,              // contol signal to indicate valid date on the d_out line   
-    output  logic er_freeN,                 // signal to indicate if the data is error free or not
-    output  logic msg_done                  // singal to indicate end of transmission
+    input   logic erLoad,                   // control signal to load error vector (uncomment if needed)
+    input   logic [15:0] dataIn,            // input data to the tx block from top
+    input   logic [31:0] erIn,              // input error vector for the error injuctor module
+    input   logic endMsgIn                  // singal to indicate end of message transmission
     );
 
     // internal ports for the interface
-    tri  cw_valid;                          // signal to indicate that codeword is valid
-    tri [15:0] cw_d, er_cw_d;
-    tri [15:0] cw_crc, er_cw_crc;
+    tri             CWValid;                // signal to indicate that codeword is valid
+    tri     [15:0]  dataOut;                // output data from the receiver block
+    wire            dOutValid;              // contol signal to indicate valid date on the d_out line   
+    wire            erFree, endMsgOut;      // signal to indicate if the data is error free or not, end of message
+    tri     [31:0]  CW, erCW;               // ports to interface 
 
-    // modeport for the transmitter module
 
-//### CHECK WITH HARSH WHAT OTHER SINGLAS ARE NEEDED! ######
-    modport transmitter(
-        input clk, rst, d_in_valid, d_in,
-        output cw_valid, cw_d, er_cw_d
+////////// Modport for the transmitter module ////////////////////////////////////////////////////
+// 
+//  Port definitions:
+//      
+//      clk     -> Master clock signal
+//      rst     -> Master reset signal
+//      dataIn  -> Incoming data from the top module to the transmitter block   
+//      cwValid -> Indicates when the code word is valid
+//      cw      -> Is the codeword output from the transimitter block
+//      busy    -> bBsy signal to indicate if the transmitter block is busy or not
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    modport transmitter (
+        input clk, rst, dataIn, endOfMsg             
+        output CWValid, CW, busy 
+        );          
+
+//////////  Modport for the error injector module V1 ///////////////////////////////////////////////
+// 
+//  Port definitions:
+//      
+//      rst     -> Master reset signal
+//      erIn    -> Incoming error vector from the top module   
+//      cw      -> Is the codeword output from the transimitter block
+//      erCw    -> codeword injucted with error
+//
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    modport errorInjectorV1 (
+        input   rst, erIn, CW,
+        input   erLoad          // uncommet if need to be used  
+        output  erCW
         );
 
-    // modport for the error injector module
-    modport errorInjector (
-        input   rst, er_load, er_in, cw_d, cw_crc,
-        output  er_cw_d, er_cw_crc
+//////////  Modport for the error injector module V2 ///////////////////////////////////////////////
+// 
+//  Description: This modport is for interfacing with the injuctor module without memeory element 
+//              in it to store the error in it. It directly take the error vector from the testbench 
+//              and selectively adds to the codeword. Hence no reset signal is also needed.
+// 
+//  Port definitions:
+//    
+//      erIn    -> Incoming error vector from the top module   
+//      cw      -> Is the codeword output from the transimitter block
+//      erCw    -> codeword injucted with error
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    modport errorInjectorV2 (
+        input   erIn, CW,
+        output  erCW
         );
 
-    // modport for the receiver module
+//////////  Modport for the receiver module ////////////////////////////////////////////////////
+// 
+//  Port definitions:
+//      
+//      clk         -> Master clock signal
+//      rst         -> Master reset signal
+//      erCW        -> Incoming codeword with error in it 
+//      CWValid     -> signal to indicate that the codeword is valid
+//      dOutValid   -> Indicate that the ouput data is valid
+//      erFree      -> Indicate that data is error free or not
+//      endMsgOut   -> Indicate end of message transmission
+//      dOut        -> data out after attmepting to correct the error
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
     modport receiver(
-        input clk, rst, er_cw_d, er_cw_crc, cw_valid,
-        output d_out_valid, er_freeN, msg_done, d_out
+        input clk, rst, erCW, CWValid,
+        output dOutValid, erFree, endMsgOut, dOut
         );
 
 endinterface
