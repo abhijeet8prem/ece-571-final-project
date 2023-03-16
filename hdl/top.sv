@@ -1,14 +1,23 @@
 module top();
   logic [15:0] dataIn, CrcOut, dataOut;
   bit clk = 1'b1;
-  logic rst, crcValid, eom, eot;
+  logic rst, crcValid, endOfMsg, eot;
   logic [7:0] m1, m2, ascii;
   string s = "HARSHA";
   logic [7:0] msg[$];
   int length;//, bit_flips;
-  logic [31:0] error_bits; 
+  logic [31:0] error_bits;
+
+  logic [31:0] erIn,              // input error vector for the error injuctor module
+  logic endMsgIn                  // singal to indicate end of message transmission
   
   //crcgen DUT(.*);
+  topInterface    TI(.*); 
+  crcgen          TX(TI.transimitter);
+  error_injector  EI(TI.errorInjectorV2);
+  rx_wrapper      RX(TI.receiver);
+
+
   
   initial begin
     forever #5 clk = ~clk;
@@ -36,8 +45,8 @@ module top();
     forever begin
       if(~(TI.busy)) begin
         if(msg.size() == 0)begin
-	  eom = '1;
-	  @(negedge clk);
+	        endOfMsg = '1;
+	        @(negedge clk);
           break;
         end
         else begin
@@ -62,7 +71,7 @@ module top();
     forever begin
       if(~(TI.busy)) begin
         if(msg.size() == 0)begin
-	  eom = '1;
+	  endOfMsg = '1;
           @(negedge clk);
           break;
 	end
@@ -104,10 +113,7 @@ module top();
       bit_flips dist {0 := 50, [1:2] := 40, [3:6] := 10};}
   endclass
 
-  topinterface TI(.*);
-    
-  crcgen geneartor(TI.CrcIntA);
-
+  
   Error_ratio ER;      
   initial begin
     reset();
@@ -134,18 +140,3 @@ module top();
     
   end
 endmodule
-
-interface topinterface(input logic clk, rst, [15:0] dataIn);
-  logic [15:0] dataOut;
-  logic [15:0]CrcOut, CrcRem;
-  logic crcValid, tag, eom, eot, data_er, busy;
-  
-  modport CrcIntA(input clk, rst, dataIn, eom, output crcValid, eot, busy, CrcOut, dataOut);
-  
- // modport ErrInj(input dataOut, CrcOut, crcValid, eot, output data_er, Crc_er, eof); 
-  
-  //modport CrcIntB(input clock, rst, data_er, Crc_er, eof, output crcValid, CrcOut, CrcRem);
-  
-  //modport PatInt(input CrcRem, output tag, iserror, CorVec, Corvec4);
-endinterface
-
