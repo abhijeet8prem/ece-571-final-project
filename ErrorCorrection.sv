@@ -48,7 +48,7 @@ module Correction(CrcRem, tag, CorVec, CorVec4, iserror);
       endcase
   
       case(CrcRem)
-	16'b0000000000000011    :   CorVec2 = 32'h00000003;	
+	      16'b0000000000000011    :   CorVec2 = 32'h00000003;	
         16'b0000000000000101    :   CorVec2 = 32'h00000005;	
         16'b0000000000000110    :   CorVec2 = 32'h00000006;	
         16'b0000000000001001    :   CorVec2 = 32'h00000009;	
@@ -452,7 +452,7 @@ module Correction(CrcRem, tag, CorVec, CorVec4, iserror);
       endcase
  
       case(CrcRem)
-  	16'b0000000000100001    :       begin
+  	    16'b0000000000100001    :       begin
                                         CorVec3 = 32'h00000021;
                                         CorVec4 = 32'h00011000;
                                         end
