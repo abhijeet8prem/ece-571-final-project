@@ -18,7 +18,7 @@
 interface   topInterface(                   // <-- ports that interfaces with the top module
     input   logic clk,                      // master clock signal
     input   logic rst,                      // master rest signal
-    input   logic erLoad,                   // control signal to load error vector (uncomment if needed)
+    //input   logic erLoad,                   // control signal to load error vector (uncomment if needed)
     input   logic [15:0] dataIn,            // input data to the tx block from top
     input   logic [31:0] erIn,              // input error vector for the error injuctor module
     input   logic endMsgIn                  // singal to indicate end of message transmission
@@ -32,7 +32,7 @@ interface   topInterface(                   // <-- ports that interfaces with th
     tri     [31:0]  CW, erCW;               // ports to interface 
 
 
-////////// Modport for the transmitter module ////////////////////////////////////////////////////
+/*///////// Modport for the transmitter module ////////////////////////////////////////////////////
 // 
 //  Port definitions:
 //      
@@ -48,7 +48,7 @@ interface   topInterface(                   // <-- ports that interfaces with th
     modport transmitter (
         input clk, rst, dataIn, endOfMsg             
         output CWValid, CW, busy 
-        );          
+        );  */        
 
 //////////  Modport for the error injector module V1 ///////////////////////////////////////////////
 // 
