@@ -1,9 +1,16 @@
+// Enter the file desciption here
+
 module top();
+
+  parameter file = "input-message.txt";
+  
   logic [15:0] dataIn, CrcOut, dataOut;
   bit clk = 1'b1;
   logic rst, crcValid, endOfMsg, eot;
   logic [7:0] m1, m2, ascii;
-  string s = "HARSHA";
+  //string s = "HARSHA";
+  string fileContents;                       // String variable to store the input message
+  
   logic [7:0] msg[$];
   int length;//, bit_flips;
   logic [31:0] error_bits;
@@ -18,10 +25,34 @@ module top();
   rx_wrapper      RX(TI.receiver);
 
 
+// Initial block to perform file handeling
+  initial begin
+      // Open the file
+      automatic int file_handle = $fopen(file, "r");
+      automatic byte data;
+      
+      if (file_handle == 0) begin
+        $display("Error opening file %s", file);
+        $finish;
+      end
+
+      // Read the file contents into the string variable
+      
+      while (!$feof(file_handle)) begin
+        $fread(data, file_handle);
+        fileContents = {fileContents, $sformatf("%c", data)};
+      end
+
+      // Close the file
+      $fclose(file_handle);
+    end
+
   
   initial begin
     forever #5 clk = ~clk;
   end
+
+
   
   task reset();
     begin
@@ -117,9 +148,9 @@ module top();
   Error_ratio ER;      
   initial begin
     reset();
-    length = s.len();
+    length = fileContents.len();
     $display("%d",length);
-    strtoascii(length,s);
+    strtoascii(length,fileContents);
     ER = new();
     
     if(length%2 == 0) 
