@@ -1,16 +1,14 @@
-module Correction(CrcRem, tag, CorVec, CorVec4, iserror);
+module Correction(erCW, CrcRem, crt_en, isZero, hits, dataOut1, dataOut2);
   input [15:0] CrcRem;
-  output logic [31:0] CorVec, CorVec4;
-  output logic tag, iserror;
-  logic [31:0] CorVec1, CorVec2, CorVec3;
-  logic [2:0] hit;
+  input [31:0] erCW;
+  input crt_en;
+  output logic [31:0] dataOut1, dataOut2;
+  output isZero;
+  output logic [2:0] hits;
+  logic [31:0] CorVec, CorVec1, CorVec2, CorVec3, CorVec4;
 
   always_comb
     begin
-      if(CrcRem == 0)begin
-        iserror = 0;
-        $display("No errors were found in the transmitted message");
-      end else begin
       case (CrcRem)
         16'b0000000000000001	:	CorVec1 = 32'h00000001;	
         16'b0000000000000010	:	CorVec1 = 32'h00000002;
@@ -48,7 +46,7 @@ module Correction(CrcRem, tag, CorVec, CorVec4, iserror);
       endcase
   
       case(CrcRem)
-	      16'b0000000000000011    :   CorVec2 = 32'h00000003;	
+	16'b0000000000000011    :   CorVec2 = 32'h00000003;	
         16'b0000000000000101    :   CorVec2 = 32'h00000005;	
         16'b0000000000000110    :   CorVec2 = 32'h00000006;	
         16'b0000000000001001    :   CorVec2 = 32'h00000009;	
@@ -452,7 +450,7 @@ module Correction(CrcRem, tag, CorVec, CorVec4, iserror);
       endcase
  
       case(CrcRem)
-  	    16'b0000000000100001    :       begin
+  	16'b0000000000100001    :       begin
                                         CorVec3 = 32'h00000021;
                                         CorVec4 = 32'h00011000;
                                         end
@@ -649,30 +647,41 @@ module Correction(CrcRem, tag, CorVec, CorVec4, iserror);
 					CorVec4 = 32'h00000000;
 					end
       endcase
-      end
     end
   
   always_comb
     begin
       if(CorVec1)
-        hit = 3'b100;
+        hits = 3'b100;
       else if(CorVec2)
-        hit = 3'b010;
+        hits = 3'b010;
       else if(CorVec3)
-        hit = 3'b001;
+        hits = 3'b001;
       else
-        hit= 3'b000;
+        hits = 3'b000;
     end
   
   always_comb
     begin
-      case(hit)
+      case(hits)
           3'b100 	: CorVec = CorVec1;
           3'b010 	: CorVec = CorVec2;
           3'b001 	: CorVec = CorVec3;
           default 	: CorVec = '0;
       endcase
     end
+  /*
+  always_comb
+    begin
+      if(!CorVec)
+        dataOut1 = erCW;
+      else begin
+        dataOut1 = CorVec ^ erCW;
+        dataOut2 = (hit[0]) ? (CorVec4 ^ erCW) : 'z;
+      end
+    end
+*/
+  assign dataOut1 = (crt_en) ? (CorVec ^ erCW) : 'z;
+  assign dataOut2 = (hits[0] && crt_en) ? (CorVec4 ^ erCW) : 'z;
 
 endmodule
-
