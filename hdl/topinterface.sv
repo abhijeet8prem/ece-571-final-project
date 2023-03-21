@@ -17,21 +17,20 @@
 
 interface   topInterface(                   // <-- ports that interfaces with the top module
     input   logic clk,                      // master clock signal
-    input   logic rst,                      // master rest signal
-    input   logic dataValid,                   // control signal to load error vector (uncomment if needed)
-    input   logic [15:0] dataIn,            // input data to the tx block from top
-    input   logic [31:0] erIn,              // input error vector for the error injuctor module
-    input   logic endMsgIn                  // singal to indicate end of message transmission
+    input   logic rst                      // master rest signal  
     );
 
     // internal ports for the interface
+    logic             dataValid;         // control signal to load error vector (uncomment if needed)
+    logic     [15:0]  dataIn;            // input data to the tx block from top
+    logic     [31:0]  erIn;              // input error vector for the error injuctor module
+    logic             endMsgIn;                  // singal to indicate end of message transmission
     logic             CWValid;                // signal to indicate that codeword is valid
-    logic             erCWValid;	      // signal to indicate that error codeword is valid
-    logic     [15:0]  dataOut;                // output data from the receiver block
+    logic             erCWValid;	      // signal to indicate that error codeword is valid                
     logic             dOutValid;              // contol signal to indicate valid date on the d_out line   
     logic             erFree, endMsgOut;      // signal to indicate if the data is error free or not, end of message
     logic     [31:0]  CW, erCW;               // ports to interface 
-    logic     [15:0]  dOut;
+    logic     [15:0]  dOut;                     // output data from the receiver block
     logic             busy;
 
 ////////// Modport for the transmitter module ////////////////////////////////////////////////////
