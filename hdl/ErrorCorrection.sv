@@ -670,17 +670,7 @@ module Correction(erCW, CrcRem, crt_en, isZero, hits, dataOut1, dataOut2);
           default 	: CorVec = '0;
       endcase
     end
-  /*
-  always_comb
-    begin
-      if(!CorVec)
-        dataOut1 = erCW;
-      else begin
-        dataOut1 = CorVec ^ erCW;
-        dataOut2 = (hit[0]) ? (CorVec4 ^ erCW) : 'z;
-      end
-    end
-*/
+
   assign dataOut1 = (crt_en) ? (CorVec ^ erCW) : 'z;
   assign dataOut2 = (hits[0] && crt_en) ? (CorVec4 ^ erCW) : 'z;
 

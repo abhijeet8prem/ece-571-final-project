@@ -57,7 +57,7 @@ module crcTxPort(topInterface.transmitter TxPort);
       endcase
     end
  
-  always_ff@(posedge TxPort.clk)
+  always_ff@(negedge TxPort.clk)
     begin
       if(done == 1) begin
          TxPort.CW <= {TxPort.dataIn,Q};

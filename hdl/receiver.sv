@@ -1,23 +1,26 @@
 module rx_wrapper(topInterface.receiver RxPort);
   logic [31:0] ercodeWord, dataOut1, dataOut2;
-  reg   [31:0] erCW, m, n, ErrCW;
-  logic [15:0] CrcRem, dOut, o, crcIn;
-  logic        CrcRemValid, isZero, busy ;
+  reg   [31:0] erCW, ErrCW;
+  logic [15:0] CrcRem, dOut, crcIn;
+  logic        CrcRemValid, isZero, eot;
   
-  crcCheck        CR(RxPort.clk, RxPort.rst, RxPort.erCWValid, erCW, CrcRemValid, CrcRem, ercodeWord); 
+  crcCheck        cC(RxPort.clk, RxPort.rst, RxPort.erCWValid, erCW, CrcRemValid, CrcRem, ercodeWord); 
   ErrorCorrection EC(RxPort.clk, RxPort.rst, CrcRemValid, ErrCW, crcIn, RxPort.dOutValid, RxPort.erFree, RxPort.dOut);
 
-  assign erCW = m;
-  always_ff@(posedge RxPort.clk)
-    if(RxPort.erCWValid) m = RxPort.erCW;
-  
-  assign ErrCW = n;
   always_latch
-    if(CrcRemValid) n = ercodeWord;
+    if(RxPort.erCWValid) erCW = RxPort.erCW;
   
-  assign crcIn = o;
   always_latch
-    if(CrcRemValid) o = CrcRem;
+    if(CrcRemValid) ErrCW = ercodeWord;
+  
+  always_latch
+    if(CrcRemValid) crcIn = CrcRem;
+
+  always_latch
+    if(CrcRemValid) eot = RxPort.endMsgIn;
+   
+  always_latch
+    if(RxPort.dOutValid) RxPort.endMsgOut = eot;
 
 
 endmodule

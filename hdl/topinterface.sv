@@ -2,7 +2,6 @@
 // interface.sv - Interface to connect all the modules in the CRC error Detection and correction
 //                project                    
 //
-// Author           : Abhijeet Prem  (abhij@pdx.edu)
 // Last modified    : 15th Mar 2023
 //
 // Description:

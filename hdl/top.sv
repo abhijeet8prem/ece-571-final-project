@@ -1,7 +1,6 @@
- 
- class Error_ratio;
+class Error_ratio;
     rand logic  [31:0] erIn;
-    constraint c_flips { $countones(erIn) == 1; }
+    constraint c_flips {$countones(erIn) dist {1:=40, 2:=40, 3:=20};}
 endclass
 
 
@@ -9,19 +8,17 @@ module top();
   
   parameter file = "input-message.txt";
   
-  //logic [15:0] dataIn,;
   bit clk = 1'b1;
   logic rst;// dataValid;
   logic [7:0] m1, m2, ascii;
-  //string s = "HARSHA";
-  string fileContents;                       // String variable to store the input message
+  string fileContents;    // String variable to store the input message
   logic [7:0] msg[$];
+  logic [15:0] receivedOut[$];
   int length;            // input error vector for the error injuctor module
-  //logic endMsgIn; 
-  //logic [31:0] erIn = {2'b11,{30{1'b0}}};                 // singal to indicate end of message transmission
+
   
   Error_ratio ER = new();       // creating the object for the error class
-  //wire [31:0] erIn1 = ER.erIn1;
+
   topInterface    TI(.*); 
   crcTxPort       TX(TI.transmitter);
   errorInj        EI(TI.errorInjector);
@@ -34,19 +31,15 @@ module top();
       // Open the file
       automatic int file_handle = $fopen(file, "r");
       automatic byte data;
-      
       if (file_handle == 0) begin
         $display("Error opening file %s", file);
         $finish;
       end
-
-      // Read the file contents into the string variable
-      
+      // Read the file contents into the string variable   
       while (!$feof(file_handle)) begin
         $fread(data, file_handle);
         fileContents = {fileContents, $sformatf("%c", data)};
       end
-
       // Close the file
       $fclose(file_handle);
     end
@@ -78,8 +71,8 @@ module top();
       TI.dataValid = '0;
       if(~(TI.busy)) begin
         if(msg.size() == 0)begin
-	        TI.endMsgIn = '1;
-	        @(negedge clk);
+	   TI.endMsgIn = '1;
+	   @(negedge clk);
           break;
         end
         else begin
@@ -87,13 +80,13 @@ module top();
           m2 = msg.pop_front();
           TI.dataIn = {m1,m2};
           TI.dataValid = '1;
-	        assert(ER.randomize());
+	  assert(ER.randomize());
           TI.erIn = ER.erIn;
         end
       end
       @(negedge clk);
     end
-    repeat(10)@(negedge clk);
+    repeat(100)@(negedge clk);
     $finish();
   endtask
 
@@ -102,7 +95,7 @@ module top();
       TI.dataValid = '0;
       if(~(TI.busy)) begin
         if(msg.size() == 0)begin
-	        TI.endMsgIn = '1;
+	  TI.endMsgIn = '1;
           @(negedge clk);
           break;
 	end
@@ -111,7 +104,7 @@ module top();
           m2 = 8'b0;
           TI.dataIn = {m1,m2};
           TI.dataValid = '1;
-	        assert(ER.randomize() );
+	  assert(ER.randomize());
           TI.erIn = ER.erIn;
         end
         else begin
@@ -119,7 +112,7 @@ module top();
           m2 = msg.pop_front();
           TI.dataIn = {m1,m2};
           TI.dataValid = '1;
-	        assert(ER.randomize() );
+	  assert(ER.randomize() );
           TI.erIn = ER.erIn;
         end
       end
@@ -139,4 +132,5 @@ module top();
     else 
       Oddlen(length, msg);    
   end
+
 endmodule
