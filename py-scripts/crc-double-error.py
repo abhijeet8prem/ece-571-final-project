@@ -139,7 +139,8 @@ print(" TX  code word \t: {:032b}" .format(tx_codeword))
 # extraxting error of 1st case, can be made into a loop
 
 i = 0
-error = int(''.join(str(x) for x in errors[i]),2)
+#error = int(''.join(str(x) for x in errors[i]),2)
+error = 0x00000002
 print(" 32 bit error\t: {:032b} ".format(error))
 
 error_codeword = tx_codeword ^ error
@@ -149,8 +150,8 @@ print(" error codeword\t: {:032b} ".format(error_codeword))
 
 rx_crc = int(mod2div(tx_codeword_str,poly),2)
 print(" recived CRC\t: {:32b}".format(rx_crc))
-
-rx_crc_er = int(mod2div(error_codeword_str,poly),2)
+rem1 = encodeData(error_codeword_str,poly)
+rx_crc_er = int(rem1[32:],2)
 print(" error CRC\t: {:016b}".format(rx_crc_er))
 
 #print(" Error vector \t\t\t\t\t Error CRC")
@@ -162,15 +163,22 @@ print(" error CRC\t: {:016b}".format(rx_crc_er))
 
 l_error = len(errors)
 
-print(" \tError vector \t\t\t\t Error CRC")
+print("\tTX_code word\t\t \t\tError vector \t\t\t\t\t Error Codeword bin\t\t Error_CW hex \t\t\tError CRC\t\tError CRC hex")
 
 
 for i in range(l_error):
     error = int(''.join(str(x) for x in errors[i]),2)                                       # extracting the a error vector from the list
     error_codeword = tx_codeword ^ error                                                    # adding the error to the transimmted code word
-    error_codeword_str = bin_format(error_codeword,32)                                       
-    rx_crc_er = int(mod2div(error_codeword_str,poly),2)                                     # finding the CRC for the error injected code-word
-    #print(" {:032b}\t\t {:016b}".format(error,rx_crc_er))                                  # uncommet to display on terminal
+    error_codeword_str = bin_format(error_codeword,32)
+    rem = mod2div(error_codeword_str,poly)
+    rem2 = encodeData(tx_codeword_str,poly)
+
+   
+    rem3 =  mod2div(error_codeword_str,poly)   
+    #print("Err rem1:"+rem[32:] +" no error:"+ rem2[32:] + " Err rem2: {:016b}".format(int(rem3,2)))
+
+    rx_crc_er = int(rem,2)                                                           # finding the CRC for the error injected code-word
+    print("{:032b}\t {:032b}\t\t {:032b}\t\t{:08x}\t {:016b} \t\t{:08x}".format(tx_codeword,error, error_codeword, error_codeword,rx_crc_er,rx_crc_er))                                 # uncommet to display on terminal
     crc_error_b_file.write(" {:032b}\t {:016b}\n".format(error,rx_crc_er))                # writing to file, values in binary
     crc_error_h_file.write(" {:08x}\t {:08x}\n".format(error,rx_crc_er))                  # writing to file, values in hex
     crc_error_d_file.write(" {:d}\t {:d}\n".format(error,rx_crc_er))                      # writing to file, values in decimal

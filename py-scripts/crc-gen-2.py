@@ -77,7 +77,10 @@ def encodeData(data, key):
     return codeword
 
 #input_string = "0110100001101001"
-input_string = "0010010011100100"
+input_string = "0110100101110011"  #is
+#input_string =  "1101011010010110"
+
+
 poly = "10001000000100001"              # one of the crc-16 polynomial
 #poly = "1011"
 crc = mod2div(input_string,poly)
@@ -96,7 +99,19 @@ print(error_codeword1)
 #receiver CRC
 crc_rec = mod2div(codeword,poly)
 print(crc_rec)
+codeword2 = encodeData(error_codeword1, poly)
 
 #received error CRC
 crc_rec_er = mod2div(error_codeword1,poly)
 print(crc_rec_er)
+print(codeword2[32:])
+
+for i in range (0,32):
+    error = 1 << i
+    error_codeword1 = int_code ^ error
+    error_codeword1 = bin_format(error_codeword1,32)
+    codeword2 = mod2div(error_codeword1, poly)
+    print(bin_format(error,32)+"\t16'b"+codeword2)
+
+
+
