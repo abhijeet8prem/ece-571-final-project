@@ -1,26 +1,36 @@
+////////////////////////////////////////////////////////////////////////////////////////////////
+// receiver.sv - Module to receive the corrupted codeword and sends out the corrected output
+//                                     
+//
+// Last modified    : 24th Mar 2023
+//
+// Description:
+//  * Connected with the help of topInterface to pass input and output signals
+//  * modport receiver facilitates the inputs and outputs
+//  * All 1 or 2 bit erros are corrected.
+//  * 3 or more errors that happened on the CW cannot be corrected but are reported
+//          
+//
+////////////////////////////////////////////////////////////////////////////////////////////////
+
 module rx_wrapper(topInterface.receiver RxPort);
-  logic [31:0] ercodeWord, dataOut1, dataOut2;
-  reg   [31:0] erCW, ErrCW;
-  logic [15:0] CrcRem, dOut, crcIn;
-  logic        CrcRemValid, isZero, eot;
+  logic [31:0] erCWOut;  		//output from the Errorcheck block
+  reg   [31:0] erCWIn;			//register to latch the output
+  logic [15:0] RemIn;			//output from the Errorcheck block
+  reg   [15:0] RemOut;			//register to latch the output
+  logic        RemValid;		//signal to indicate valid data on the output bus
   
-  crcCheck        cC(RxPort.clk, RxPort.rst, RxPort.erCWValid, erCW, CrcRemValid, CrcRem, ercodeWord); 
-  ErrorCorrection EC(RxPort.clk, RxPort.rst, CrcRemValid, ErrCW, crcIn, RxPort.dOutValid, RxPort.erFree, RxPort.dOut);
+  ErrorCheck      E1(RxPort.clk, RxPort.rst, RxPort.erCWValid, RxPort.erCW, RemValid, RemOut, erCWOut); 
+  ErrorCorrection E2(RxPort.clk, RxPort.rst, RemValid, erCWIn, RemIn, RxPort.dOutValid, RxPort.erFree, RxPort.dOut);
+  
+  //signal to indicate the busy state of the receiver
+  assign RxPort.Rxbusy = (rx_wrapper.E1.busy | rx_wrapper.E2.busy); 
+  assign RxPort.endMsgOut = (RxPort.endMsgIn && RxPort.dOutValid) ? '1 : '0;
 
   always_latch
-    if(RxPort.erCWValid) erCW = RxPort.erCW;
+    if(RemValid) erCWIn = erCWOut;
   
   always_latch
-    if(CrcRemValid) ErrCW = ercodeWord;
-  
-  always_latch
-    if(CrcRemValid) crcIn = CrcRem;
-
-  always_latch
-    if(CrcRemValid) eot = RxPort.endMsgIn;
-   
-  always_latch
-    if(RxPort.dOutValid) RxPort.endMsgOut = eot;
-
+    if(RemValid) RemIn = RemOut;
 
 endmodule
