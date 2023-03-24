@@ -1,0 +1,5 @@
+extract repeting patterns
+cat crc_rx_pattern_b.txt| sort -k 2n | uniq -f 1 -D
+
+
+
