@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
-// topInterface.sv - Interface to connect all the modules in the CRC error Detection and correction
+// interface.sv - Interface to connect all the modules in the CRC error Detection and correction
 //                project                    
 //
-// Last modified    : 24th Mar 2023
+// Last modified    : 15th Mar 2023
 //
 // Description:
 //  * Aninterface to encapsulate all the singnals from the top module
@@ -30,7 +30,7 @@ interface   topInterface(                   // <-- ports that interfaces with th
     logic             erFree, endMsgOut;      // signal to indicate if the data is error free or not, end of message
     logic     [31:0]  CW, erCW;               // ports to interface 
     logic     [15:0]  dOut;                     // output data from the receiver block
-    logic             Txbusy, Rxbusy;
+    logic             busy;
 
 ////////// Modport for the transmitter module ////////////////////////////////////////////////////
 // 
@@ -47,7 +47,7 @@ interface   topInterface(                   // <-- ports that interfaces with th
 
     modport transmitter (
         input clk, rst, dataIn, dataValid,          
-        output CWValid, CW, Txbusy 
+        output CWValid, CW, busy 
         );          
 
 //////////  Modport for the error injector module V2 ///////////////////////////////////////////////
@@ -85,7 +85,7 @@ interface   topInterface(                   // <-- ports that interfaces with th
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     modport receiver(
-        input clk, rst, erCWValid, erCW, endMsgIn,
-        output Rxbusy, dOutValid, erFree, endMsgOut, dOut);
+        input clk, rst, erCW, erCWValid, endMsgIn,
+        output dOutValid, erFree, endMsgOut, dOut);
 
 endinterface

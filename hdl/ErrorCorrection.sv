@@ -1,15 +1,30 @@
-module Correction(erCW, CrcRem, crt_en, isZero, hits, dataOut1, dataOut2);
-  input [15:0] CrcRem;
-  input [31:0] erCW;
-  input crt_en;
-  output logic [31:0] dataOut1, dataOut2;
-  output isZero;
-  output logic [2:0] hits;
-  logic [31:0] CorVec, CorVec1, CorVec2, CorVec3, CorVec4;
+////////////////////////////////////////////////////////////////////////////////////////////////
+// errorCorrection.sv - Module to genearte the Correction pattern based on the CRC reamainder genearted.
+//                                   
+//
+// Last modified    : 24th Mar 2023
+//
+// Description:
+//  * This module geneartes correction pattern as well as the type of error occured.
+//        
+//          
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+module Correction(erCW, Rem, crt_en, isZero, hits, CorCW1, CorCW2);
+  input [15:0] Rem;						//Corrupted codeword reaminder 
+  input [31:0] erCW;						//Error codeword 
+  input crt_en;							//Signal to enable the correction of the corrupted Codeword
+  output logic [31:0] CorCW1, CorCW2;				//Corrected output codewords based on the CRC remainder pattern
+  output isZero;						//Signal to indicate if the CRC reaminder is zero
+  output logic [2:0] hits;					//Signal to indicate the type of error happened on the codeword
+  logic [31:0] CorVec, CorVec1, CorVec2, CorVec3, CorVec4;      //Correction vectors to correct the corrupted codeword
 
   always_comb
     begin
-      case (CrcRem)
+      //CRC reaminder patterns and corresponding Correction vectors
+      //for all possible 1 bit Errors that can occur during transmission
+      case (Rem)
         16'b0000000000000001	:	CorVec1 = 32'h00000001;	
         16'b0000000000000010	:	CorVec1 = 32'h00000002;
         16'b0000000000000100	:	CorVec1 = 32'h00000004;
@@ -26,14 +41,14 @@ module Correction(erCW, CrcRem, crt_en, isZero, hits, dataOut1, dataOut2);
         16'b0010000000000000	:	CorVec1 = 32'h00002000;
         16'b0100000000000000	:	CorVec1 = 32'h00004000;
         16'b1000000000000000	:	CorVec1 = 32'h00008000;
-        16'b0001000000100000	:	CorVec1 = 32'h00010000;
+        16'b0001000000100001	:	CorVec1 = 32'h00010000;
         16'b0010000001000010	:	CorVec1 = 32'h00020000;
         16'b0100000010000100	:	CorVec1 = 32'h00040000;
         16'b1000000100001000	:	CorVec1 = 32'h00080000;
         16'b0001001000110001	:	CorVec1 = 32'h00100000;
         16'b0010010001100010	:	CorVec1 = 32'h00200000;
         16'b0100100011000100	:	CorVec1 = 32'h00400000;
-        16'b1000000100001000	:	CorVec1 = 32'h00800000;
+        16'b1001000110001000	:	CorVec1 = 32'h00800000;
         16'b0011001100110001	:	CorVec1 = 32'h01000000;
         16'b0110011001100010	:	CorVec1 = 32'h02000000;
         16'b1100110011000100	:	CorVec1 = 32'h04000000;
@@ -45,7 +60,9 @@ module Correction(erCW, CrcRem, crt_en, isZero, hits, dataOut1, dataOut2);
         default			:	CorVec1 = 32'h00000000;
       endcase
   
-      case(CrcRem)
+      //CRC reaminder patterns and corresponding Correction vectors
+      //for all possible unique 2 bit Errors that can occur during transmission
+      case(Rem)
 	16'b0000000000000011    :   CorVec2 = 32'h00000003;	
         16'b0000000000000101    :   CorVec2 = 32'h00000005;	
         16'b0000000000000110    :   CorVec2 = 32'h00000006;	
@@ -449,7 +466,9 @@ module Correction(erCW, CrcRem, crt_en, isZero, hits, dataOut1, dataOut2);
         default                 :       CorVec2 = 32'h00000000;
       endcase
  
-      case(CrcRem)
+      //CRC reaminder patterns and corresponding Correction vectors
+      //for all possible non-unique 2 bit Errors that can occur during transmission
+      case(Rem)
   	16'b0000000000100001    :       begin
                                         CorVec3 = 32'h00000021;
                                         CorVec4 = 32'h00011000;
@@ -638,7 +657,7 @@ module Correction(erCW, CrcRem, crt_en, isZero, hits, dataOut1, dataOut2);
                                         CorVec3 = 32'h00084000;
                                         CorVec4 = 32'h44000000;
                                         end
-        16'b1100100011000101    :       begin 
+        16'b1100100011000100    :       begin 
                                         CorVec3 = 32'h00408000;
                                         CorVec4 = 32'h04000400;
                                         end
@@ -649,29 +668,27 @@ module Correction(erCW, CrcRem, crt_en, isZero, hits, dataOut1, dataOut2);
       endcase
     end
   
+  //Procedural block to check the type of Error
+  //and provide corresponding correction vector
   always_comb
     begin
-      if(CorVec1)
+      if(|CorVec1) begin
+        CorVec = CorVec1;
         hits = 3'b100;
-      else if(CorVec2)
+      end else if(|CorVec2) begin
+        CorVec = CorVec2;
         hits = 3'b010;
-      else if(CorVec3)
+      end else if(|CorVec3) begin
         hits = 3'b001;
-      else
+        CorVec = CorVec3;
+      end else begin
         hits = 3'b000;
+        CorVec = '0;
+      end
     end
-  
-  always_comb
-    begin
-      case(hits)
-          3'b100 	: CorVec = CorVec1;
-          3'b010 	: CorVec = CorVec2;
-          3'b001 	: CorVec = CorVec3;
-          default 	: CorVec = '0;
-      endcase
-    end
-
-  assign dataOut1 = (crt_en) ? (CorVec ^ erCW) : 'z;
-  assign dataOut2 = (hits[0] && crt_en) ? (CorVec4 ^ erCW) : 'z;
+ 
+  //Correction of the Corrupted Code word based on the match
+  assign CorCW1 = (crt_en) ? (CorVec ^ erCW) : 'z;
+  assign CorCW2 = (hits[0] && crt_en) ? (CorVec4 ^ erCW) : 'z;
 
 endmodule
