@@ -44,6 +44,12 @@ module top();
       $display("Error: opening input file %s", file);
       $finish;
   end
+  
+  if (output_file == 0) 
+  begin
+      $display("Error: opening input file %s", o_file);
+      $finish;
+  end
   end
 
   // task to reset the system
@@ -95,7 +101,10 @@ module top();
               TI.endMsgIn = '1;
               assert(ER.randomize());        // generating random error
               Error_injection(ER.bit_flips);
-              TI.erIn = erIn;           
+              TI.erIn = erIn;
+			  `ifdef DEBUG
+			   $display($time," dataIn:%c,%c \t dataValid:%b \t TxBusy:%b \t EndMsgIn:%b \t erIn:%h\t ",m1, m2, TI.dataValid, TI.Txbusy, TI.endMsgIn, TI.erIn );
+			  `endif
             end else
             begin 
               TI.dataIn = {m1,m2};
@@ -103,6 +112,9 @@ module top();
               assert(ER.randomize());
               Error_injection(ER.bit_flips);
               TI.erIn = erIn;
+			  `ifdef DEBUG
+			   $display($time," dataIn:%c,%c \t dataValid:%b \t TxBusy:%b \t EndMsgIn:%b \t erIn:%h\t ",m1, m2, TI.dataValid, TI.Txbusy, TI.endMsgIn, TI.erIn );
+			  `endif
             end
           end
        end
